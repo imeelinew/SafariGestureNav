@@ -512,7 +512,7 @@
 				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Safari Gesture Nav/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Safari Gesture Nav";
+				INFOPLIST_KEY_CFBundleDisplayName = "Safari Gesture Nav Safari";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Safari Gesture Nav 需要向 Safari 发送后退和前进命令。";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -567,7 +567,7 @@
 				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Safari Gesture Nav/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Safari Gesture Nav";
+				INFOPLIST_KEY_CFBundleDisplayName = "Safari Gesture Nav Safari";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Safari Gesture Nav 需要向 Safari 发送后退和前进命令。";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
