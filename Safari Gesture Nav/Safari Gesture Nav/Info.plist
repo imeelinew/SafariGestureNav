@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>SFSafariWebExtensionConverterVersion</key>
+	<string>27.0</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Safari Gesture Nav 需要向 Safari 发送后退和前进命令。</string>
+</dict>
+</plist>
