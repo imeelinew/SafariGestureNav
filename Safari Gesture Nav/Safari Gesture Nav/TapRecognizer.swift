@@ -12,6 +12,8 @@ final class TapRecognizer {
     private let gatherWindow: TimeInterval = 0.080
     private let maxDuration: TimeInterval = 0.220
     private let debounce: TimeInterval = 0.300
+    // TODO(eli): 双指滑动防误触。滑动起手也是两指，短距离一抬就会走 finish() 变成 back。
+    // 请改 movedTooFar(_:) 和 finish(_:at:)：用速度、位移方向是否一致、纵向分量，把 scroll 和轻点分开。不要只靠这个毫米阈值。
     private let movementMM: Float = 3.6
 
     private struct Candidate {
