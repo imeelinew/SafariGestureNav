@@ -1,11 +1,4 @@
-function show(enabled, useSettingsInsteadOfPreferences) {
-    if (useSettingsInsteadOfPreferences) {
-        document.getElementsByClassName("state-on")[0].innerText = "扩展已启用。请授予辅助功能与输入监控权限。关闭本窗口后程序仍在后台运行。";
-        document.getElementsByClassName("state-off")[0].innerText = "扩展尚未启用，请前往 Safari 扩展设置开启。";
-        document.getElementsByClassName("state-unknown")[0].innerText = "请在 Safari 的“设置 → 扩展”中启用 Safari Gesture Nav。";
-        document.getElementsByClassName("open-preferences")[0].innerText = "打开 Safari 扩展设置…";
-    }
-
+function show(enabled) {
     if (typeof enabled === "boolean") {
         document.body.classList.toggle("state-on", enabled);
         document.body.classList.toggle("state-off", !enabled);

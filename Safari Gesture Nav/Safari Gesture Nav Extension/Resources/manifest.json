@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Safari Gesture Nav",
   "version": "1.0.0",
-  "description": "Two-finger tap goes back, three-finger tap goes forward in the current Safari tab.",
+  "description": "Three-finger tap goes back, four-finger tap goes forward in the current Safari tab.",
   "permissions": [
     "nativeMessaging",
     "tabs"

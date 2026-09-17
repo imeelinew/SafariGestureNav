@@ -30,24 +30,42 @@ xcodebuild \
   -derivedDataPath "$derived_data" \
   build
 
-# Older versions kept a complete built app inside the repository. LaunchServices
-# can discover that embedded extension and make Safari show it next to the copy
-# in /Applications, even though both have the same bundle identifier.
-pluginkit -r "$legacy_derived_data/Build/Products/Release/Safari Gesture Nav.app/Contents/PlugIns/Safari Gesture Nav Extension.appex" 2>/dev/null || true
+# Remove every stale registration of this bundle ID before registering the
+# installed copy. Xcode and older install scripts may have registered apps from
+# temporary or DerivedData build folders; Safari otherwise lists both copies.
+pluginkit -m -A -v | awk -F '\t' '/dev\.eli\.safari\.gesturenav\.Extension\(/ {print $NF}' | while IFS= read -r registered_extension; do
+  [[ "${registered_extension:A}" == "${destination_extension:A}" || "${registered_extension:A}" == "${product_extension:A}" ]] && continue
+  pluginkit -r "$registered_extension" 2>/dev/null || true
+  case "$registered_extension" in
+    /private/tmp/SafariGestureNav.*/Build/Products/*/Safari\ Gesture\ Nav.app/Contents/PlugIns/*|/tmp/SafariGestureNav.*/Build/Products/*/Safari\ Gesture\ Nav.app/Contents/PlugIns/*)
+      stale_app="${registered_extension%/Contents/PlugIns/*}"
+      rm -rf "$stale_app"
+      ;;
+  esac
+done
 if [[ -d "$legacy_derived_data" ]]; then
   rm -rf "$legacy_derived_data"
 fi
 
 if [[ -e "$destination" ]]; then
   osascript -e 'tell application "Safari Gesture Nav" to quit' 2>/dev/null || true
+  pluginkit -r "$destination_extension" 2>/dev/null || true
   rm -rf "$destination"
 fi
 
 ditto "$product" "$destination"
+# Remove old temporary app bundles even when LaunchServices no longer lists them.
+find /private/tmp -maxdepth 6 -type d -path '/private/tmp/SafariGestureNav.*/Build/Products/*/Safari Gesture Nav.app' -print0 | while IFS= read -r -d '' stale_app; do
+  [[ "${stale_app:A}" == "${product:A}" ]] && continue
+  rm -rf "$stale_app"
+done
 pluginkit -r "$product_extension" 2>/dev/null || true
 pluginkit -a "$destination_extension"
 pluginkit -e use -i "$extension_identifier" || true
-defaults write com.apple.Safari IncludeDevelopMenu -bool true
-defaults write com.apple.Safari AllowUnsignedExtensions -bool true || true
+# Only needed the first time Safari allows this unsigned extension; writing
+# Safari's container preferences may be denied (e.g. sandboxed shells), so a
+# failure here must not block the install.
+defaults write com.apple.Safari IncludeDevelopMenu -bool true 2>/dev/null || true
+defaults write com.apple.Safari AllowUnsignedExtensions -bool true 2>/dev/null || true
 open "$destination"
 echo "Installed: $destination"

@@ -7,7 +7,7 @@
 :root {
     color-scheme: light dark;
 
-    --spacing: 20px;
+    --spacing: 14px;
 }
 
 html {
@@ -28,6 +28,23 @@ body {
     text-align: center;
 }
 
+h1,
+p {
+    margin: 0;
+}
+
+.gesture {
+    color: -apple-system-secondary-label;
+}
+
+.state-on {
+    color: #30a14e;
+}
+
+.state-off {
+    color: #d73a49;
+}
+
 body:not(.state-on, .state-off) :is(.state-on, .state-off) {
     display: none;
 }
@@ -42,4 +59,5 @@ body.state-off :is(.state-on, .state-unknown) {
 
 button {
     font-size: 1em;
+    padding: 5px 14px;
 }

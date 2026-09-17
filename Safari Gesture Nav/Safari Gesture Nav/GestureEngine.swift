@@ -7,7 +7,7 @@ final class GestureEngine {
     let bridge = SafariBridge()
     private let input = GestureInput()
     private let recognizer = TapRecognizer()
-    private let suppressor = EventSuppressor()
+    private let navigationHUD = NavigationHUD()
 
     var isRunning: Bool {
         bridge.gesturesEnabled && input.attachedDeviceCount > 0
@@ -19,20 +19,15 @@ final class GestureEngine {
 
     func start() {
         requestPermissions()
-        suppressor.start()
-        suppressor.setPhysicalClickHandler { [weak self] in
-            self?.recognizer.notePhysicalClick()
-        }
-
-        recognizer.onCandidateChanged = { [weak self] count, active in
-            guard let self else { return }
-            self.suppressor.updateCandidate(fingerCount: count, active: active, onSurfaceCount: count ?? 0)
-        }
         recognizer.onAction = { [weak self] action, id in
             guard let self else { return }
-            self.suppressor.swallowAfterTap(action: action)
             DispatchQueue.main.async {
-                self.bridge.send(action: action, id: id)
+                self.bridge.send(action: action, id: id) { succeeded in
+                    guard succeeded else { return }
+                    DispatchQueue.main.async {
+                        self.navigationHUD.show(action)
+                    }
+                }
             }
         }
 
@@ -66,12 +61,16 @@ final class GestureEngine {
 
     func stop() {
         input.stop()
-        suppressor.stop()
         recognizer.reset(reason: "engine stop")
     }
 
     func test(_ action: NavigationAction) {
-        bridge.send(action: action, id: UUID().uuidString, activateSafari: true)
+        bridge.send(action: action, id: UUID().uuidString, activateSafari: true) { succeeded in
+            guard succeeded else { return }
+            DispatchQueue.main.async {
+                self.navigationHUD.show(action)
+            }
+        }
     }
 
     private func handle(_ frame: TrackpadFrame) {
@@ -84,7 +83,6 @@ final class GestureEngine {
             return
         }
 
-        suppressor.noteFrameAge(0)
         recognizer.handle(frame)
     }
 
@@ -95,12 +93,5 @@ final class GestureEngine {
 
         let inputOK = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
         AppLog.info("input monitoring granted=\(inputOK)")
-    }
-}
-
-enum TrackpadLookupSetting {
-    static var threeFingerLookupEnabled: Bool {
-        let defaults = UserDefaults(suiteName: "com.apple.AppleMultitouchTrackpad")
-        return defaults?.object(forKey: "TrackpadThreeFingerTapGesture") as? Int == 2
     }
 }

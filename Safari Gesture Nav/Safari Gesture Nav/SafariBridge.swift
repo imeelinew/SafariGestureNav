@@ -1,72 +1,35 @@
 import ApplicationServices
 import AppKit
 import Foundation
-import SafariServices
 
 final class SafariBridge {
-    static let extensionIdentifier = "dev.eli.safari.gesturenav.Extension"
     static let safariBundleIdentifier = "com.apple.Safari"
 
-    private let defaults = UserDefaults.standard
-    private let nativeOnlyKey = "nativeNavigationOnly"
-
     var gesturesEnabled = true
-    private(set) var lastMessage: String = "idle"
-
-    var prefersNativeNavigation: Bool {
-        get { defaults.object(forKey: nativeOnlyKey) as? Bool ?? true }
-        set { defaults.set(newValue, forKey: nativeOnlyKey) }
-    }
+    private(set) var lastMessage = "idle"
 
     func isSafariFrontmost() -> Bool {
         NSWorkspace.shared.frontmostApplication?.bundleIdentifier == Self.safariBundleIdentifier
     }
 
-    func send(action: NavigationAction, id: String, timestamp: TimeInterval = Date().timeIntervalSince1970 * 1000, activateSafari: Bool = false) {
+    func send(action: NavigationAction, id: String, activateSafari: Bool = false,
+              completion: ((Bool) -> Void)? = nil) {
         guard gesturesEnabled || activateSafari else {
             lastMessage = "disabled"
+            completion?(false)
             return
         }
-
-        if activateSafari {
-            activateSafariApp()
-        }
-
-        guard isSafariFrontmost() || activateSafari else {
+        if activateSafari { activateSafariApp() }
+        guard isSafariFrontmost() else {
             lastMessage = "safari-not-frontmost"
-            AppLog.info("discard \(action.rawValue): Safari is not frontmost")
+            completion?(false)
             return
         }
 
-        let useNative = prefersNativeNavigation || activateSafari
-        let payload: [String: Any] = [
-            "id": id,
-            "action": action.rawValue,
-            "timestamp": timestamp,
-            "execute": !useNative
-        ]
-
-        dispatchToExtension(name: "navigate", userInfo: payload)
-
-        if useNative {
-            let nativeOK = NativeSafariNavigator.perform(action)
-            lastMessage = nativeOK ? "native-\(action.rawValue)" : "native-failed-\(action.rawValue)"
-            AppLog.info("native \(action.rawValue) ok=\(nativeOK) id=\(id)")
-        }
-    }
-
-    private func dispatchToExtension(name: String, userInfo: [String: Any]) {
-        SFSafariApplication.dispatchMessage(
-            withName: name,
-            toExtensionWithIdentifier: Self.extensionIdentifier,
-            userInfo: userInfo
-        ) { error in
-            if let error {
-                AppLog.error("dispatchMessage failed: \(error.localizedDescription)")
-            } else {
-                AppLog.info("dispatchMessage delivered \(name)")
-            }
-        }
+        let navigated = NativeSafariNavigator.perform(action)
+        lastMessage = navigated ? "navigated-\(action.rawValue)" : "unavailable-\(action.rawValue)"
+        AppLog.info("navigation \(action.rawValue) performed=\(navigated) id=\(id)")
+        completion?(navigated)
     }
 
     private func activateSafariApp() {
@@ -87,47 +50,31 @@ final class SafariBridge {
 
 enum NativeSafariNavigator {
     static func perform(_ action: NavigationAction) -> Bool {
-        if javascriptHistory(action) {
-            return true
-        }
-        if clickToolbarButton(for: action) {
-            return true
-        }
-        if clickHistoryMenu(for: action) {
-            return true
-        }
-        return pressShortcut(for: action)
-    }
-
-    private static func javascriptHistory(_ action: NavigationAction) -> Bool {
-        let js = action == .back ? "history.back()" : "history.forward()"
-        let script = """
-            tell application "Safari"
-              if (count of windows) is 0 then return "no"
-              do JavaScript "\(js)" in current tab of front window
-              return "ok"
-            end tell
-            """
-        var error: NSDictionary?
-        guard let result = NSAppleScript(source: script)?.executeAndReturnError(&error) else {
-            return false
-        }
-        return result.stringValue == "ok"
+        // Safari disables these controls when the tab has no entry in that direction.
+        // A successful dispatch or history.back() call alone cannot prove navigation.
+        clickToolbarButton(for: action) || clickHistoryMenu(for: action)
     }
 
     private static func clickToolbarButton(for action: NavigationAction) -> Bool {
         guard let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier else { return false }
         let app = AXUIElementCreateApplication(pid)
+        var focusedValue: AnyObject?
+        guard AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &focusedValue) == .success,
+              let focusedValue else { return false }
+        let window = focusedValue as! AXUIElement
         let names = action == .back
             ? ["Back", "后退", "Previous Page", "上一页"]
             : ["Forward", "前进", "Next Page", "下一页"]
         let identifiers = action == .back
-            ? ["Back", "BackButton", "back"]
-            : ["Forward", "ForwardButton", "forward"]
+            ? ["BackButton"]
+            : ["ForwardButton"]
         var visited = 0
-        guard let button = findButton(root: app, names: Set(names), identifiers: identifiers, visited: &visited) else {
+        guard let button = findButton(root: window, names: Set(names), identifiers: identifiers, visited: &visited, inToolbar: false) else {
             return false
         }
+        var enabledValue: AnyObject?
+        guard AXUIElementCopyAttributeValue(button, kAXEnabledAttribute as CFString, &enabledValue) == .success,
+              (enabledValue as? NSNumber)?.boolValue == true else { return false }
         var error = AXUIElementPerformAction(button, kAXPressAction as CFString)
         if error != .success {
             error = AXUIElementPerformAction(button, "AXPress" as CFString)
@@ -135,27 +82,29 @@ enum NativeSafariNavigator {
         return error == .success
     }
 
-    private static func findButton(root: AXUIElement, names: Set<String>, identifiers: [String], visited: inout Int) -> AXUIElement? {
+    private static func findButton(root: AXUIElement, names: Set<String>, identifiers: [String], visited: inout Int, inToolbar: Bool) -> AXUIElement? {
         if visited > 500 { return nil }
         visited += 1
 
         let role = stringAttribute(root, kAXRoleAttribute as CFString)
+        if role == "AXWebArea" { return nil }
+        let isToolbar = inToolbar || role == "AXToolbar"
         let title = stringAttribute(root, kAXTitleAttribute as CFString)
         let description = stringAttribute(root, kAXDescriptionAttribute as CFString)
         let help = stringAttribute(root, kAXHelpAttribute as CFString)
         let identifier = stringAttribute(root, "AXIdentifier" as CFString)
         let values = [title, description, help, identifier].compactMap { $0 }
 
-        if role == (kAXButtonRole as String) || role == "AXButton" || role == (kAXCheckBoxRole as String) {
+        if isToolbar && (role == (kAXButtonRole as String) || role == "AXButton" || role == (kAXCheckBoxRole as String)) {
             if values.contains(where: { names.contains($0) }) { return root }
-            if let identifier, identifiers.contains(where: { identifier.localizedCaseInsensitiveContains($0) }) {
+            if let identifier, identifiers.contains(where: { identifier.caseInsensitiveCompare($0) == .orderedSame }) {
                 return root
             }
         }
 
         guard let children = children(of: root) else { return nil }
         for child in children {
-            if let match = findButton(root: child, names: names, identifiers: identifiers, visited: &visited) {
+            if let match = findButton(root: child, names: names, identifiers: identifiers, visited: &visited, inToolbar: isToolbar) {
                 return match
             }
         }
@@ -182,10 +131,12 @@ enum NativeSafariNavigator {
               tell application "System Events"
                 tell process "Safari"
                   try
+                    if not (enabled of menu item "Back" of menu "History" of menu bar 1) then return "no"
                     click menu item "Back" of menu "History" of menu bar 1
                     return "ok"
                   end try
                   try
+                    if not (enabled of menu item "后退" of menu "历史记录" of menu bar 1) then return "no"
                     click menu item "后退" of menu "历史记录" of menu bar 1
                     return "ok"
                   end try
@@ -197,10 +148,12 @@ enum NativeSafariNavigator {
               tell application "System Events"
                 tell process "Safari"
                   try
+                    if not (enabled of menu item "Forward" of menu "History" of menu bar 1) then return "no"
                     click menu item "Forward" of menu "History" of menu bar 1
                     return "ok"
                   end try
                   try
+                    if not (enabled of menu item "前进" of menu "历史记录" of menu bar 1) then return "no"
                     click menu item "前进" of menu "历史记录" of menu bar 1
                     return "ok"
                   end try
@@ -215,19 +168,4 @@ enum NativeSafariNavigator {
         return result.stringValue == "ok"
     }
 
-    private static func pressShortcut(for action: NavigationAction) -> Bool {
-        let key: CGKeyCode = action == .back ? 0x21 : 0x1E
-        let source = CGEventSource(stateID: .hidSystemState)
-        guard
-            let down = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: true),
-            let up = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: false)
-        else {
-            return false
-        }
-        down.flags = .maskCommand
-        up.flags = .maskCommand
-        down.post(tap: .cghidEventTap)
-        up.post(tap: .cghidEventTap)
-        return true
-    }
 }

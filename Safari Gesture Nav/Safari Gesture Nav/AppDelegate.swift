@@ -7,7 +7,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         engine.start()
-        AppLog.info("app launched devices=\(engine.deviceCount) lookup3finger=\(TrackpadLookupSetting.threeFingerLookupEnabled)")
+        AppLog.info("app launched devices=\(engine.deviceCount) gestures=3-back,4-forward")
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

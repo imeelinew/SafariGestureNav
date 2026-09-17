@@ -12,8 +12,8 @@
 		45C49FE4305A340D007CE2E9 /* GestureInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C49FE3305A340D007CE2E9 /* GestureInput.swift */; };
 		45C49FE6305A340D007CE2E9 /* TapRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C49FE5305A340D007CE2E9 /* TapRecognizer.swift */; };
 		45C49FE8305A340D007CE2E9 /* SafariBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C49FE7305A340D007CE2E9 /* SafariBridge.swift */; };
-		45C49FEA305A340D007CE2E9 /* EventSuppressor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C49FE9305A340D007CE2E9 /* EventSuppressor.swift */; };
 		45C49FEC305A340D007CE2E9 /* GestureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C49FEB305A340D007CE2E9 /* GestureEngine.swift */; };
+		45C49FEF305A340D007CE2E9 /* NavigationHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C49FEE305A340D007CE2E9 /* NavigationHUD.swift */; };
 		45C49FB2305A340C007CE2E9 /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = 45C49FB0305A340C007CE2E9 /* Main.html */; };
 		45C49FB4305A340C007CE2E9 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 45C49FB3305A340C007CE2E9 /* Icon.png */; };
 		45C49FB6305A340C007CE2E9 /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = 45C49FB5305A340C007CE2E9 /* Style.css */; };
@@ -57,8 +57,8 @@
 		45C49FE3305A340D007CE2E9 /* GestureInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureInput.swift; sourceTree = "<group>"; };
 		45C49FE5305A340D007CE2E9 /* TapRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TapRecognizer.swift; sourceTree = "<group>"; };
 		45C49FE7305A340D007CE2E9 /* SafariBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariBridge.swift; sourceTree = "<group>"; };
-		45C49FE9305A340D007CE2E9 /* EventSuppressor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventSuppressor.swift; sourceTree = "<group>"; };
 		45C49FEB305A340D007CE2E9 /* GestureEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureEngine.swift; sourceTree = "<group>"; };
+		45C49FEE305A340D007CE2E9 /* NavigationHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationHUD.swift; sourceTree = "<group>"; };
 		45C49FB1305A340C007CE2E9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = Base.lproj/Main.html; sourceTree = "<group>"; };
 		45C49FB3305A340C007CE2E9 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 		45C49FB5305A340C007CE2E9 /* Style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = Style.css; sourceTree = "<group>"; };
@@ -115,8 +115,8 @@
 				45C49FE3305A340D007CE2E9 /* GestureInput.swift */,
 				45C49FE5305A340D007CE2E9 /* TapRecognizer.swift */,
 				45C49FE7305A340D007CE2E9 /* SafariBridge.swift */,
-				45C49FE9305A340D007CE2E9 /* EventSuppressor.swift */,
 				45C49FEB305A340D007CE2E9 /* GestureEngine.swift */,
+				45C49FEE305A340D007CE2E9 /* NavigationHUD.swift */,
 				45C49FB9305A340C007CE2E9 /* ViewController.swift */,
 				45C49FBB305A340C007CE2E9 /* Main.storyboard */,
 				45C49FBE305A340D007CE2E9 /* Assets.xcassets */,
@@ -265,8 +265,8 @@
 				45C49FE4305A340D007CE2E9 /* GestureInput.swift in Sources */,
 				45C49FE6305A340D007CE2E9 /* TapRecognizer.swift in Sources */,
 				45C49FE8305A340D007CE2E9 /* SafariBridge.swift in Sources */,
-				45C49FEA305A340D007CE2E9 /* EventSuppressor.swift in Sources */,
 				45C49FEC305A340D007CE2E9 /* GestureEngine.swift in Sources */,
+				45C49FEF305A340D007CE2E9 /* NavigationHUD.swift in Sources */,
 			);
 		};
 		45C49FC1305A340D007CE2E9 /* Sources */ = {
